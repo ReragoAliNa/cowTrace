@@ -114,7 +114,7 @@ def main():
         print(f"Model file not found at {model_path}. Running pipeline in simulation mode.")
     
     # Check if a real video file exists in the directory
-    video_path = os.path.join(config.BASE_DIR, "cow.mp4")
+    video_path = config.VIDEO_PATH
     use_video = os.path.exists(video_path)
     
     if use_video:
