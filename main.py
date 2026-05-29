@@ -361,19 +361,22 @@ def main():
                         best_label = beh["label"]
                 
                 if best_iou >= 0.40 and best_label is not None:
-                    # Fusion Priority Rules:
-                    # 1. Estrus & Grazing are specific, high-priority behaviors
-                    if best_label in ["Estrus", "Grazing"]:
-                        cow.status = best_label
-                    # 2. Lying behavior confirmed by model
-                    elif best_label == "Lying":
+                    # Directly assign the behavior label predicted by behavior.pt
+                    cow.status = best_label
+                else:
+                    # Fallback mapping: only allow "Lying" or "Standing"
+                    if cow.status == "Lying":
                         cow.status = "Lying"
-                    # 3. Standing: if rule-based gait analyzer says "Limping" or "Walking", keep it.
-                    # Otherwise, set it to "Standing"
-                    elif best_label == "Standing":
-                        if cow.status not in ["Limping", "Walking"]:
-                            cow.status = "Standing"
-        elif not is_model_present:
+                    else:
+                        cow.status = "Standing"
+        elif is_model_present:
+            # If behavior.pt is not loaded but we are running detection, restrict heuristics to 4 classes
+            for cow in analyzed_cows:
+                if cow.status == "Lying":
+                    cow.status = "Lying"
+                else:
+                    cow.status = "Standing"
+        else:
             # Simulation Mode: Inject simulated behavior labels from behavior.pt for demo purposes
             # Cow #0: Grazing, Cow #1: Estrus, Cow #2: Standing/Lying
             for cow in analyzed_cows:
