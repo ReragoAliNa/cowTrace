@@ -3,6 +3,14 @@ from typing import List, Any
 from scipy.optimize import linear_sum_assignment
 from filterpy.kalman import KalmanFilter
 
+# Optional Rust PyO3 tracker support
+RUST_AVAILABLE = False
+try:
+    from cow_trace_rs import RustTracker, BBox
+    RUST_AVAILABLE = True
+except ImportError:
+    pass
+
 # Optional / default fallback implementation of SingleCattleData
 # in case the user does not define it elsewhere.
 class SingleCattleData:
@@ -124,6 +132,23 @@ class CentroidTracker:
         Returns:
             The modified cattle_list with updated 'cattle_id' fields.
         """
+        if RUST_AVAILABLE:
+            if not hasattr(self, 'rust_tracker'):
+                self.rust_tracker = RustTracker(self.max_age, self.min_iou)
+            
+            rust_dets = []
+            for c in cattle_list:
+                x1, y1, x2, y2 = c.bbox
+                rust_dets.append(BBox(float(x1), float(y1), float(x2), float(y2)))
+                
+            try:
+                assigned_ids = self.rust_tracker.update(rust_dets)
+                for idx, cid in enumerate(assigned_ids):
+                    cattle_list[idx].cattle_id = int(cid)
+                return cattle_list
+            except Exception as e:
+                print(f"[WARNING] Rust tracker failed: {e}. Falling back to Python tracker.")
+                
         # If no trackers exist, initialize all detections as new tracks
         if len(self.trackers) == 0:
             for cattle in cattle_list:

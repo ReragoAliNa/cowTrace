@@ -16,3 +16,7 @@ venv/
 .venv/
 env/
 .env/
+
+# Rust compilation outputs
+target/
+cow_trace_rs/target/
