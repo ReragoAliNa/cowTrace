@@ -75,6 +75,22 @@ def generate_farm_background(w: int = 800, h: int = 600) -> np.ndarray:
     frame = (frame * 0.15).astype(np.uint8)
     return frame
 
+def box_iou(box1, box2):
+    """Calculates Intersection over Union (IoU) of two bounding boxes."""
+    x11, y11, x12, y12 = box1
+    x21, y21, x22, y22 = box2
+    xi1 = max(x11, x21)
+    yi1 = max(y11, y21)
+    xi2 = min(x12, x22)
+    yi2 = min(y12, y22)
+    inter_area = max(0.0, xi2 - xi1) * max(0.0, yi2 - yi1)
+    box1_area = (x12 - x11) * (y12 - y11)
+    box2_area = (x22 - x21) * (y22 - y21)
+    union_area = box1_area + box2_area - inter_area
+    if union_area <= 0:
+        return 0.0
+    return inter_area / union_area
+
 def main():
     print("=== Cow Behavior Monitoring System Pipeline ===")
     
@@ -89,6 +105,42 @@ def main():
         pad_color=config.PREPROCESS_PAD_COLOR
     )
     
+    # Dynamic Tracker Engine Selection
+    tracker_choice = config.TRACKER_ENGINE
+    if tracker_choice == "interactive" and sys.stdin.isatty():
+        print("\n=== Tracker Engine Selection ===")
+        print("  [1] Rust Tracker (Accelerated, default)")
+        print("  [2] Python Tracker (Native)")
+        
+        choice = ""
+        try:
+            choice = input("Select Tracker Engine [1-2] (default: 1): ").strip()
+        except Exception:
+            pass
+            
+        if choice == "2":
+            tracker_choice = "python"
+        else:
+            tracker_choice = "rust"
+            
+    # Set tracker mode dynamically
+    import core.tracker as tracker_module
+    if tracker_choice == "python":
+        tracker_module.RUST_AVAILABLE = False
+        print("Active Tracker Engine: Python (Native)")
+    elif tracker_choice == "rust":
+        if not tracker_module.RUST_IMPORTED:
+            print("[WARNING] Rust tracker requested but not compiled/available. Falling back to Python.")
+            tracker_module.RUST_AVAILABLE = False
+            print("Active Tracker Engine: Python (Fallback)")
+        else:
+            tracker_module.RUST_AVAILABLE = True
+            print("Active Tracker Engine: Rust (Accelerated)")
+    else:
+        # "auto" or default fallback
+        tracker_module.RUST_AVAILABLE = tracker_module.RUST_IMPORTED
+        print(f"Active Tracker Engine: {'Rust (Accelerated)' if tracker_module.RUST_AVAILABLE else 'Python (Fallback)'}")
+
     tracker = CentroidTracker(
         max_age=config.TRACKING_MAX_AGE,
         min_iou=0.3
@@ -104,14 +156,25 @@ def main():
         trajectory_max_len=config.TRACKING_MAX_AGE
     )
     
-    # Initialize LSNetEngine (supports .pt, .onnx, and .engine models)
+    # Initialize Engines (supports .pt, .onnx, and .engine models)
+    # 1. Individual Re-ID model (best.pt)
     model_path = config.MODEL_PATH
     engine = LSNetEngine(model_path=model_path)
     is_model_present = os.path.exists(model_path)
     if is_model_present:
-        print(f"Detected model file at {model_path}. Using real model inference.")
+        print(f"Detected individual Re-ID model at {model_path}. Using real model inference.")
     else:
-        print(f"Model file not found at {model_path}. Running pipeline in simulation mode.")
+        print(f"Individual model file not found at {model_path}. Running pipeline in simulation mode.")
+        
+    # 2. Behavior detection model (behavior.pt)
+    behavior_model_path = config.BEHAVIOR_MODEL_PATH
+    is_behavior_present = os.path.exists(behavior_model_path)
+    behavior_engine = None
+    if is_behavior_present:
+        print(f"Detected behavior model at {behavior_model_path}. Loading behavior model engine...")
+        behavior_engine = LSNetEngine(model_path=behavior_model_path)
+    else:
+        print(f"Behavior model file not found at {behavior_model_path}. Falling back to speed/aspect-ratio heuristic behavior analysis.")
     
     # Check videos directory and let user select a video
     videos_dir = config.VIDEOS_DIR
@@ -139,7 +202,7 @@ def main():
                 pass
                 
         if not choice:
-            selected_file = video_files[0]
+            selected_file = "test.mp4" if "test.mp4" in video_files else video_files[0]
             print(f"No selection made or non-interactive mode. Defaulting to: {selected_file}")
         else:
             try:
@@ -239,6 +302,71 @@ def main():
         
         # F. Behavior Analysis (Classify standing, walking, lying, limping)
         analyzed_cows = analyzer.analyze(tracked_cows, visualizer.histories, (w_orig, h_orig))
+        
+        # F2. Multi-Model Fusion: Fuse behavior predictions from behavior.pt model via IoU
+        if behavior_engine is not None:
+            behavior_detections = []
+            try:
+                bboxes_beh, _, _ = behavior_engine.infer(processed_frame)
+                for box in bboxes_beh:
+                    x1, y1, x2, y2, score, class_id = box
+                    if score >= 0.25:
+                        restored_bbox = preprocessor.restore_coords([[x1, y1, x2, y2]], meta)[0]
+                        label = behavior_engine.model.names[int(class_id)] if hasattr(behavior_engine, 'model') and behavior_engine.model is not None else str(class_id)
+                        # Normalize label to Title Case
+                        if label.lower() == "estrus":
+                            label = "Estrus"
+                        elif label.lower() == "grazing":
+                            label = "Grazing"
+                        elif label.lower() == "lying":
+                            label = "Lying"
+                        elif label.lower() == "standing":
+                            label = "Standing"
+                        
+                        behavior_detections.append({
+                            "bbox": list(restored_bbox),
+                            "label": label,
+                            "score": score
+                        })
+            except Exception as e:
+                print(f"[ERROR] Behavior model inference failed: {e}")
+                
+            # Perform IoU association
+            for cow in analyzed_cows:
+                best_iou = 0.0
+                best_label = None
+                for beh in behavior_detections:
+                    iou = box_iou(cow.bbox, beh["bbox"])
+                    if iou > best_iou:
+                        best_iou = iou
+                        best_label = beh["label"]
+                
+                if best_iou >= 0.40 and best_label is not None:
+                    # Fusion Priority Rules:
+                    # 1. Estrus & Grazing are specific, high-priority behaviors
+                    if best_label in ["Estrus", "Grazing"]:
+                        cow.status = best_label
+                    # 2. Lying behavior confirmed by model
+                    elif best_label == "Lying":
+                        cow.status = "Lying"
+                    # 3. Standing: if rule-based gait analyzer says "Limping" or "Walking", keep it.
+                    # Otherwise, set it to "Standing"
+                    elif best_label == "Standing":
+                        if cow.status not in ["Limping", "Walking"]:
+                            cow.status = "Standing"
+        elif not is_model_present:
+            # Simulation Mode: Inject simulated behavior labels from behavior.pt for demo purposes
+            # Cow #0: Grazing, Cow #1: Estrus, Cow #2: Standing/Lying
+            for cow in analyzed_cows:
+                if cow.cattle_id == 0:
+                    cow.status = "Grazing"
+                elif cow.cattle_id == 1:
+                    cow.status = "Estrus"
+                elif cow.cattle_id == 2:
+                    if idx % 50 < 25:
+                        cow.status = "Standing"
+                    else:
+                        cow.status = "Lying"
         
         # G. Render and Visualize
         annotated_frame = visualizer.draw(frame, analyzed_cows)

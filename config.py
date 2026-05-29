@@ -6,7 +6,8 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 
 # LSNet Model Configuration
 MODEL_INPUT_SIZE = (640, 640)      # (width, height) for LSNet engine
-MODEL_PATH = os.path.join(BASE_DIR, "models", "best.pt")  # Path to the PyTorch/ONNX model weight file
+MODEL_PATH = os.path.join(BASE_DIR, "models", "best.pt")            # Individual Re-ID model weight file
+BEHAVIOR_MODEL_PATH = os.path.join(BASE_DIR, "models", "behavior.pt") # Action/Behavior detection model weight file
 VIDEOS_DIR = os.path.join(BASE_DIR, "videos")              # Directory containing video files
 
 # Image Preprocessing Configuration
@@ -22,3 +23,7 @@ LIMPING_THRESHOLD = 0.5            # Threshold for limping classification
 LYING_THRESHOLD = 0.6              # Threshold for lying classification
 TRACKING_MAX_AGE = 30              # Max frames to keep a missing track active
 TRACKING_MIN_HITS = 3              # Min frames to confirm a track
+
+# Tracker Engine Configuration
+# Choose tracking engine: "interactive" (startup menu), "rust", "python", or "auto"
+TRACKER_ENGINE = "interactive"

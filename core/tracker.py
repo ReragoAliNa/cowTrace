@@ -4,12 +4,14 @@ from scipy.optimize import linear_sum_assignment
 from filterpy.kalman import KalmanFilter
 
 # Optional Rust PyO3 tracker support
-RUST_AVAILABLE = False
+RUST_IMPORTED = False
 try:
     from cow_trace_rs import RustTracker, BBox
-    RUST_AVAILABLE = True
+    RUST_IMPORTED = True
 except ImportError:
     pass
+
+RUST_AVAILABLE = RUST_IMPORTED
 
 # Optional / default fallback implementation of SingleCattleData
 # in case the user does not define it elsewhere.
