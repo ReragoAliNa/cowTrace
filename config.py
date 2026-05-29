@@ -7,7 +7,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, "outputs")
 # LSNet Model Configuration
 MODEL_INPUT_SIZE = (640, 640)      # (width, height) for LSNet engine
 MODEL_PATH = os.path.join(BASE_DIR, "models", "best.pt")  # Path to the PyTorch/ONNX model weight file
-VIDEO_PATH = os.path.join(BASE_DIR, "test.mp4")            # Path to the input video file
+VIDEOS_DIR = os.path.join(BASE_DIR, "videos")              # Directory containing video files
 
 # Image Preprocessing Configuration
 PREPROCESS_CLAHE_CLIP = 2.0

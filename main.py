@@ -113,10 +113,49 @@ def main():
     else:
         print(f"Model file not found at {model_path}. Running pipeline in simulation mode.")
     
-    # Check if a real video file exists in the directory
-    video_path = config.VIDEO_PATH
-    use_video = os.path.exists(video_path)
+    # Check videos directory and let user select a video
+    videos_dir = config.VIDEOS_DIR
+    if not os.path.exists(videos_dir):
+        os.makedirs(videos_dir, exist_ok=True)
+        
+    valid_extensions = (".mp4", ".avi", ".mkv", ".mov")
+    video_files = [f for f in os.listdir(videos_dir) if f.lower().endswith(valid_extensions)]
     
+    use_video = len(video_files) > 0
+    video_path = ""
+    video_name = "synthetic"
+    
+    if use_video:
+        print("\n=== Available Video Files ===")
+        for idx, name in enumerate(video_files):
+            print(f"  [{idx + 1}] {name}")
+            
+        choice = ""
+        # Check if stdin is a TTY to allow interactive input
+        if sys.stdin.isatty():
+            try:
+                choice = input(f"Select a video [1-{len(video_files)}] (default: 1): ").strip()
+            except Exception:
+                pass
+                
+        if not choice:
+            selected_file = video_files[0]
+            print(f"No selection made or non-interactive mode. Defaulting to: {selected_file}")
+        else:
+            try:
+                sel_idx = int(choice) - 1
+                if 0 <= sel_idx < len(video_files):
+                    selected_file = video_files[sel_idx]
+                else:
+                    selected_file = video_files[0]
+                    print(f"Invalid choice, defaulting to: {selected_file}")
+            except ValueError:
+                selected_file = video_files[0]
+                print(f"Invalid input, defaulting to: {selected_file}")
+                
+        video_path = os.path.join(videos_dir, selected_file)
+        video_name = os.path.splitext(selected_file)[0]
+        
     if use_video:
         cap = cv2.VideoCapture(video_path)
         # Limit to 100 frames to keep the execution fast and resource-friendly
@@ -129,9 +168,9 @@ def main():
         num_frames = 30
         w_orig, h_orig = 800, 600
         print("Using synthetic farm background.")
-    
-    # Directory to save output files
-    output_dir = config.OUTPUT_DIR
+        
+    # Directory to save output files (specific subfolder for selected video)
+    output_dir = os.path.join(config.OUTPUT_DIR, video_name)
     os.makedirs(output_dir, exist_ok=True)
     
     # Setup Output Video Writer
