@@ -221,9 +221,13 @@ def main():
         
     if use_video:
         cap = cv2.VideoCapture(video_path)
-        # Limit to 100 frames to keep the execution fast and resource-friendly
+        # Check config to limit maximum frames to keep the execution fast and resource-friendly
         total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        num_frames = min(100, total_video_frames)
+        max_frames = getattr(config, 'MAX_PROCESSING_FRAMES', None)
+        if max_frames is not None and max_frames > 0:
+            num_frames = min(max_frames, total_video_frames)
+        else:
+            num_frames = total_video_frames
         w_orig = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h_orig = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         print(f"Loaded video: {video_path} ({w_orig}x{h_orig}, running {num_frames}/{total_video_frames} frames)")

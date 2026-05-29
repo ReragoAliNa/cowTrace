@@ -27,3 +27,8 @@ TRACKING_MIN_HITS = 3              # Min frames to confirm a track
 # Tracker Engine Configuration
 # Choose tracking engine: "interactive" (startup menu), "rust", "python", or "auto"
 TRACKER_ENGINE = "interactive"
+
+# Video Processing Frame Limit
+# Set to an integer to limit the maximum frames processed (e.g. 100 for fast debug).
+# Set to None or -1 to process the entire source video.
+MAX_PROCESSING_FRAMES = None
