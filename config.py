@@ -32,3 +32,8 @@ TRACKER_ENGINE = "interactive"
 # Set to an integer to limit the maximum frames processed (e.g. 100 for fast debug).
 # Set to None or -1 to process the entire source video.
 MAX_PROCESSING_FRAMES = None
+
+# Cloud Sync Configuration
+CLOUD_SYNC_ENABLED = True
+CLOUD_UPLOAD_URL = "http://localhost:8082/api/upload"
+CLOUD_SYNC_BATCH_SIZE = 25  # Upload in batches to avoid network latency

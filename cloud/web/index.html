@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧牧场 - 云端平台</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #030712;
+            --accent-pink: #f43f5e;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --bg-grid: rgba(255, 255, 255, 0.02);
+            --card-glass: rgba(15, 23, 42, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #f1f5f9;
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding: 3rem 2rem;
+            overflow-x: hidden;
+            background-image:
+                linear-gradient(45deg, var(--bg-grid) 25%, transparent 25%),
+                linear-gradient(-45deg, var(--bg-grid) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, var(--bg-grid) 75%),
+                linear-gradient(-45deg, transparent 75%, var(--bg-grid) 75%);
+            background-size: 40px 40px;
+            background-position: 0 0, 0 20px, 20px -20px, -20px 0;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: -10%;
+            width: 50%;
+            height: 50%;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: 10%;
+            right: -10%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1450px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Deconstructive Header Section */
+        header {
+            position: relative;
+            margin-bottom: 5rem;
+            transform: skewY(-1deg);
+            z-index: 10;
+        }
+
+        .header-bg-bar {
+            position: absolute;
+            top: -20px;
+            left: -40px;
+            width: 110%;
+            height: 140px;
+            background: linear-gradient(105deg, rgba(244, 63, 94, 0.1) 0%, rgba(6, 182, 212, 0.05) 50%, transparent 100%);
+            clip-path: polygon(0 0, 100% 0, 92% 100%, 0% 100%);
+            z-index: -1;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 0.9;
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1 span.glitch-text {
+            background: linear-gradient(135deg, #fff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h1 span.accent-slash {
+            color: var(--accent-pink);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 2.2rem;
+            margin: 0 0.5rem;
+            display: inline-block;
+            transform: skewX(-15deg);
+        }
+
+        .subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-top: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subtitle::before {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 2px;
+            background-color: var(--accent-cyan);
+        }
+
+        .header-meta {
+            text-align: right;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .header-meta span {
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        /* Asymmetric Stats Layout */
+        .stats-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+            position: relative;
+        }
+
+        .stat-box {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            padding: 1.8rem;
+            flex: 1 1 200px;
+            position: relative;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow: hidden;
+        }
+
+        /* Angular deconstruction modifications */
+        .stat-box:nth-child(1) {
+            transform: rotate(-0.5deg);
+            clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%);
+            border-left: 3px solid #6366f1;
+        }
+
+        .stat-box:nth-child(2) {
+            transform: translateY(-10px) rotate(0.5deg);
+            clip-path: polygon(4% 0, 100% 0, 100% 100%, 0 100%);
+            border-left: 3px solid var(--accent-pink);
+        }
+
+        .stat-box:nth-child(3) {
+            transform: rotate(-1deg);
+            clip-path: polygon(0 0, 95% 0, 100% 100%, 0 100%);
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .stat-box:nth-child(4) {
+            transform: translateY(5px) rotate(0.8deg);
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .stat-box:nth-child(5) {
+            transform: rotate(-0.5deg);
+            clip-path: polygon(5% 0, 100% 0, 100% 90%, 0% 100%);
+            border-left: 3px solid var(--accent-yellow);
+        }
+
+        .stat-box:hover {
+            transform: scale(1.03) rotate(0deg) !important;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            z-index: 5;
+        }
+
+        .stat-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stat-num {
+            font-size: 2.6rem;
+            font-weight: 800;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .stat-num span.unit {
+            font-size: 0.9rem;
+            color: #475569;
+            font-weight: 400;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .deco-number {
+            position: absolute;
+            right: -10px;
+            bottom: -20px;
+            font-size: 6rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.02);
+            font-family: 'Share Tech Mono', monospace;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Main Workspace: Grid Deconstruction */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 2.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Deconstructive Panels */
+        .panel {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(12px);
+            position: relative;
+            margin-bottom: 3rem;
+            transition: all 0.3s ease;
+        }
+
+        .panel.asymmetric-1 {
+            clip-path: polygon(0 0, 98% 0, 100% 98%, 0 100%);
+            transform: rotate(-0.2deg);
+        }
+
+        .panel.asymmetric-2 {
+            clip-path: polygon(1% 0, 100% 0, 99% 100%, 0 98%);
+            transform: rotate(0.2deg);
+        }
+
+        /* Floating Panel Header outside the box boundary */
+        .panel-header-floating {
+            background: #0f172a;
+            border: 1px solid var(--border-glass);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.6rem 1.5rem;
+            margin-top: -20px;
+            margin-left: 20px;
+            transform: skewX(-10deg);
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        .panel-header-floating h2 {
+            font-size: 0.9rem;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transform: skewX(10deg);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header-floating h2 span.deco-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-pink);
+            display: inline-block;
+        }
+
+        .panel-content {
+            padding: 2.5rem 1.8rem 1.8rem 1.8rem;
+        }
+
+        /* Pasture Coordinate Grid Map */
+        .pasture-viewport {
+            height: 400px;
+            background-color: rgba(2, 6, 23, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Diagonal warning lines on grid boundaries */
+        .pasture-viewport::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+        }
+
+        .pasture-node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 5;
+        }
+
+        /* Deconstructive crosshair node indicators */
+        .node-marker {
+            width: 24px;
+            height: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: rgba(15, 23, 42, 0.8);
+            transition: all 0.3s;
+        }
+
+        .node-marker::before {
+            content: '';
+            position: absolute;
+            width: 32px;
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .node-marker::after {
+            content: '';
+            position: absolute;
+            height: 32px;
+            width: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .node-center {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 12px var(--accent-cyan);
+            transition: all 0.3s;
+        }
+
+        .pasture-node:hover .node-marker {
+            transform: rotate(45deg);
+            border-color: #fff;
+        }
+
+        .pasture-node:hover .node-center {
+            transform: scale(1.3);
+            background-color: #fff;
+            box-shadow: 0 0 15px #fff;
+        }
+
+        .node-label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #fff;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 2px 6px;
+            margin-top: 6px;
+            white-space: nowrap;
+            letter-spacing: 1px;
+            box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Cyberpunk Corner Decos */
+        .corner-deco {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: var(--accent-cyan);
+            border-style: solid;
+            pointer-events: none;
+        }
+
+        .top-left {
+            top: -2px;
+            left: -2px;
+            border-width: 2px 0 0 2px;
+        }
+
+        .top-right {
+            top: -2px;
+            right: -2px;
+            border-width: 2px 2px 0 0;
+        }
+
+        .bottom-left {
+            bottom: -2px;
+            left: -2px;
+            border-width: 0 0 2px 2px;
+        }
+
+        .bottom-right {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 2px 2px 0;
+        }
+
+        /* Tables & Lists */
+        .data-table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748b;
+            padding: 1.2rem 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        td {
+            padding: 1.2rem 1rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Status badges */
+        .status-tag {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 2px;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        .tag-estrus {
+            background: rgba(244, 63, 94, 0.12);
+            color: var(--accent-pink);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+        }
+
+        .tag-grazing {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .tag-lying {
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+
+        .tag-standing {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--accent-yellow);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        /* Action Buttons */
+        .btn-inspect {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Share Tech Mono', monospace;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            clip-path: polygon(0 0, 90% 0, 100% 30%, 100% 100%, 10% 100%, 0 70%);
+        }
+
+        .btn-inspect:hover {
+            color: #fff;
+            background-color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+        }
+
+        /* Right Panel: History Trace */
+        .history-timeline {
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            position: relative;
+        }
+
+        .history-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+        }
+
+        .timeline-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            margin: 0 0 1.5rem 2.5rem;
+            padding: 1.2rem;
+            position: relative;
+            clip-path: polygon(0 0, 95% 0, 100% 20%, 100% 100%, 5% 100%, 0 80%);
+            transition: all 0.2s;
+        }
+
+        .timeline-card:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(30, 41, 59, 0.6);
+        }
+
+        .timeline-card::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: -32px;
+            width: 12px;
+            height: 12px;
+            background-color: #0f172a;
+            border: 2px solid var(--accent-cyan);
+            border-radius: 50%;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-time {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .timeline-frame {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+        }
+
+        .timeline-coords {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 0.4rem;
+        }
+
+        .no-data-msg {
+            text-align: center;
+            color: #475569;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 4rem 1rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .sep {
+            color: rgba(255, 255, 255, 0.15);
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0 8px;
+            font-weight: 300;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Background decorative line -->
+        <div class="header-bg-bar"></div>
+
+        <!-- Header -->
+        <header>
+            <div class="title-container">
+                <div>
+                    <h1>
+                        <span class="glitch-text">COW_TRACE</span>
+                        <span class="accent-slash">//</span>
+                        <span style="font-weight: 300; letter-spacing: 2px;">云端脑图</span>
+                    </h1>
+                    <div class="subtitle">DECONSTRUCTIVIST DATA SPATIALIZATION SYSTEM</div>
+                </div>
+                <div class="header-meta">
+                    <div>ENGINE_STATUS: <span>ACTIVE</span></div>
+                    <div style="margin-top: 4px;">SYNC_PORT: 8082</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Grid (Asymmetrical / Skewed Cards) -->
+        <div class="stats-wrapper">
+            <div class="stat-box">
+                <div class="stat-label">Cattle Total <span class="sep">|</span> 牛只总数</div>
+                <div class="stat-num" id="stat-total">0 <span class="unit">heads</span></div>
+                <div class="deco-number">01</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Estrus Warn <span class="sep">|</span> 发情预警</div>
+                <div class="stat-num" id="stat-estrus" style="color: var(--accent-pink);">0 <span
+                        class="unit">heads</span></div>
+                <div class="deco-number" style="color: rgba(244,63,94,0.03);">02</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Grazing Feed <span class="sep">|</span> 采食中</div>
+                <div class="stat-num" id="stat-grazing" style="color: var(--accent-green);">0 <span
+                        class="unit">heads</span></div>
+                <div class="deco-number" style="color: rgba(16,185,129,0.03);">03</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Lying Rest <span class="sep">|</span> 躺卧休息</div>
+                <div class="stat-num" id="stat-lying" style="color: var(--accent-cyan);">0 <span
+                        class="unit">heads</span></div>
+                <div class="deco-number" style="color: rgba(6,182,212,0.03);">04</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Standing Active <span class="sep">|</span> 站立</div>
+                <div class="stat-num" id="stat-standing" style="color: var(--accent-yellow);">0 <span
+                        class="unit">heads</span></div>
+                <div class="deco-number" style="color: rgba(245,158,11,0.03);">05</div>
+            </div>
+        </div>
+
+        <!-- Grid Workspace -->
+        <div class="grid-layout">
+            <!-- Left Column -->
+            <div>
+                <!-- Pasture View Panel -->
+                <div class="panel asymmetric-1">
+                    <div class="corner-deco top-left"></div>
+                    <div class="corner-deco top-right"></div>
+                    <div class="corner-deco bottom-left"></div>
+                    <div class="corner-deco bottom-right"></div>
+
+                    <div class="panel-header-floating">
+                        <h2><span class="deco-dot"></span>01 / Pasture Spatialization <span class="sep">|</span>
+                            牧场三维位置射影</h2>
+                    </div>
+
+                    <div class="panel-content">
+                        <div class="pasture-viewport" id="pasture-map">
+                            <!-- Spatial nodes will be rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Roster List Panel -->
+                <div class="panel asymmetric-2">
+                    <div class="corner-deco top-left"></div>
+                    <div class="corner-deco top-right"></div>
+                    <div class="corner-deco bottom-left"></div>
+                    <div class="corner-deco bottom-right"></div>
+
+                    <div class="panel-header-floating">
+                        <h2><span class="deco-dot"></span>02 / Real-time Cow Roster <span class="sep">|</span> 动态牛只监测队列
+                        </h2>
+                    </div>
+
+                    <div class="panel-content">
+                        <div class="data-table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Cattle ID</th>
+                                        <th>Status</th>
+                                        <th>Latest Frame</th>
+                                        <th>Coordinate Box</th>
+                                        <th>Last Update</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cow-table-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Video & Inspector -->
+            <div>
+                <!-- Video Stream Panel -->
+                <div class="panel asymmetric-2" style="margin-bottom: 2.5rem;">
+                    <div class="corner-deco top-left"></div>
+                    <div class="corner-deco top-right"></div>
+                    <div class="corner-deco bottom-left"></div>
+                    <div class="corner-deco bottom-right"></div>
+
+                    <div class="panel-header-floating">
+                        <h2><span class="deco-dot" style="background-color: var(--accent-green);"></span>04 / Live Video
+                            Feed <span class="sep">|</span> 边缘端视频回传流</h2>
+                    </div>
+
+                    <div class="panel-content" style="padding: 2.5rem 1.2rem 1.2rem 1.2rem;">
+                        <div
+                            style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); background-color: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 260px;">
+                            <video id="cloud-video-player" src="/outputs/test/output_tracked.mp4" controls autoplay loop
+                                muted style="width: 100%; height: 100%; object-fit: contain;"></video>
+
+                            <!-- Video HUD scanline & info overlays -->
+                            <div
+                                style="position: absolute; top: 10px; left: 10px; pointer-events: none; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--accent-green); background: rgba(0,0,0,0.6); padding: 2px 6px; border-left: 2px solid var(--accent-green);">
+                                CAM_01 <span class="sep">|</span> EDGE_FEED
+                            </div>
+                            <div
+                                style="position: absolute; bottom: 10px; right: 10px; pointer-events: none; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0,0,0,0.6); padding: 2px 6px;">
+                                FPS: 25.0 <span class="sep">|</span> CODEC: MP4
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inspector Panel -->
+                <div class="panel asymmetric-1" style="min-height: 400px;">
+                    <div class="corner-deco top-left"></div>
+                    <div class="corner-deco top-right"></div>
+                    <div class="corner-deco bottom-left"></div>
+                    <div class="corner-deco bottom-right"></div>
+
+                    <div class="panel-header-floating">
+                        <h2 id="inspector-title"><span class="deco-dot"
+                                style="background-color: var(--accent-cyan);"></span>03 / Historical Inspector <span
+                                class="sep">|</span> 轨迹行为审查器</h2>
+                    </div>
+
+                    <div class="panel-content">
+                        <div id="inspector-content">
+                            <div class="no-data-msg">Waiting for node selection <span class="sep">|</span>
+                                请在左侧列表中选择牛只以载入轨迹元数据</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSelectedCow = null;
+
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/cows');
+                const cows = await res.json();
+
+                let estrus = 0;
+                let grazing = 0;
+                let lying = 0;
+                let standing = 0;
+
+                cows.forEach(cow => {
+                    const status = cow.status.toLowerCase();
+                    if (status === 'estrus') estrus++;
+                    else if (status === 'grazing') grazing++;
+                    else if (status === 'lying') lying++;
+                    else if (status === 'standing') standing++;
+                });
+
+                document.getElementById('stat-total').innerHTML = `${cows.length} <span class="unit">heads</span>`;
+                document.getElementById('stat-estrus').innerHTML = `${estrus} <span class="unit">heads</span>`;
+                document.getElementById('stat-grazing').innerHTML = `${grazing} <span class="unit">heads</span>`;
+                document.getElementById('stat-lying').innerHTML = `${lying} <span class="unit">heads</span>`;
+                document.getElementById('stat-standing').innerHTML = `${standing} <span class="unit">heads</span>`;
+
+                // Update Table
+                const tbody = document.getElementById('cow-table-body');
+                tbody.innerHTML = '';
+
+                cows.sort((a, b) => a.cattle_id - b.cattle_id);
+
+                cows.forEach(cow => {
+                    const timeStr = new Date(cow.timestamp).toLocaleTimeString();
+                    const tr = document.createElement('tr');
+
+                    let badgeClass = 'tag-standing';
+                    const statusLower = cow.status.toLowerCase();
+                    if (statusLower === 'estrus') badgeClass = 'tag-estrus';
+                    else if (statusLower === 'grazing') badgeClass = 'tag-grazing';
+                    else if (statusLower === 'lying') badgeClass = 'tag-lying';
+
+                    tr.innerHTML = `
+                        <td style="font-weight: 600; font-family: 'Share Tech Mono', monospace; color: var(--accent-cyan); font-size: 0.95rem;">
+                            COW_#${cow.cattle_id.toString().padStart(3, '0')}
+                        </td>
+                        <td><span class="status-tag ${badgeClass}">${cow.status}</span></td>
+                        <td style="font-family: 'Share Tech Mono', monospace;">FR_${cow.frame_index.toString().padStart(4, '0')}</td>
+                        <td style="font-family: 'Share Tech Mono', monospace; color: #475569; font-size: 0.8rem;">
+                            [${cow.bbox.join(', ')}]
+                        </td>
+                        <td style="font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: #64748b;">${timeStr}</td>
+                        <td>
+                            <button class="btn-inspect" onclick="inspectCow(${cow.cattle_id})">Inspect</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Update Spatial Map with trajectory trails
+                const pastureMap = document.getElementById('pasture-map');
+                pastureMap.innerHTML = '';
+
+                // Create SVG overlay for trajectory lines
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.position = 'absolute';
+                svg.style.top = '0';
+                svg.style.left = '0';
+                svg.style.zIndex = '1';
+                svg.style.pointerEvents = 'none';
+                pastureMap.appendChild(svg);
+
+                // Add SVG defs for glow filter and gradients
+                const defs = document.createElementNS(svgNS, 'defs');
+                const glowFilter = document.createElementNS(svgNS, 'filter');
+                glowFilter.setAttribute('id', 'trail-glow');
+                glowFilter.setAttribute('x', '-20%');
+                glowFilter.setAttribute('y', '-20%');
+                glowFilter.setAttribute('width', '140%');
+                glowFilter.setAttribute('height', '140%');
+                const feGaussian = document.createElementNS(svgNS, 'feGaussianBlur');
+                feGaussian.setAttribute('stdDeviation', '2');
+                feGaussian.setAttribute('result', 'coloredBlur');
+                glowFilter.appendChild(feGaussian);
+                const feMerge = document.createElementNS(svgNS, 'feMerge');
+                const feMergeNode1 = document.createElementNS(svgNS, 'feMergeNode');
+                feMergeNode1.setAttribute('in', 'coloredBlur');
+                feMerge.appendChild(feMergeNode1);
+                const feMergeNode2 = document.createElementNS(svgNS, 'feMergeNode');
+                feMergeNode2.setAttribute('in', 'SourceGraphic');
+                feMerge.appendChild(feMergeNode2);
+                glowFilter.appendChild(feMerge);
+                defs.appendChild(glowFilter);
+                svg.appendChild(defs);
+
+                // Color mapping helper
+                function getColorForStatus(status) {
+                    const s = status.toLowerCase();
+                    if (s === 'estrus') return '#f43f5e';
+                    if (s === 'grazing') return '#10b981';
+                    if (s === 'lying') return '#06b6d4';
+                    return '#f59e0b';
+                }
+
+                function getCSSColorForStatus(status) {
+                    const s = status.toLowerCase();
+                    if (s === 'estrus') return 'var(--accent-pink)';
+                    if (s === 'grazing') return 'var(--accent-green)';
+                    if (s === 'lying') return 'var(--accent-cyan)';
+                    return 'var(--accent-yellow)';
+                }
+
+                // Coordinate conversion helper
+                function bboxToPercent(bbox) {
+                    const cx = (bbox[0] + bbox[2]) / 2;
+                    const cy = (bbox[1] + bbox[3]) / 2;
+                    let mx = 960, my = 540;
+                    if (bbox[2] > 960 || bbox[3] > 540) { mx = 2560; my = 1440; }
+                    return {
+                        x: Math.min(92, Math.max(8, (cx / mx) * 100)),
+                        y: Math.min(90, Math.max(10, (cy / my) * 100))
+                    };
+                }
+
+                // For each cow, fetch history and draw trajectory
+                const trailPromises = cows.map(async (cow) => {
+                    if (!cow.bbox || cow.bbox.length !== 4) return;
+                    try {
+                        const hRes = await fetch(`/api/cows/${cow.cattle_id}/history`);
+                        const history = await hRes.json();
+
+                        // Sort by frame_index ascending
+                        history.sort((a, b) => a.frame_index - b.frame_index);
+
+                        // Sample: take every Nth point for smoothness (max ~60 trail points)
+                        const step = Math.max(1, Math.floor(history.length / 60));
+                        const sampled = history.filter((_, i) => i % step === 0);
+                        // Ensure last item is included
+                        if (sampled.length > 0 && sampled[sampled.length - 1] !== history[history.length - 1]) {
+                            sampled.push(history[history.length - 1]);
+                        }
+
+                        if (sampled.length < 2) return;
+
+                        const color = getColorForStatus(cow.status);
+                        const mapRect = pastureMap.getBoundingClientRect();
+                        const w = mapRect.width;
+                        const h = mapRect.height;
+
+                        // Build points array in pixel coords
+                        const points = sampled.map(item => {
+                            const pct = bboxToPercent(item.bbox);
+                            return { x: (pct.x / 100) * w, y: (pct.y / 100) * h };
+                        });
+
+                        // Draw trail segments with increasing opacity
+                        for (let i = 1; i < points.length; i++) {
+                            const line = document.createElementNS(svgNS, 'line');
+                            line.setAttribute('x1', points[i - 1].x);
+                            line.setAttribute('y1', points[i - 1].y);
+                            line.setAttribute('x2', points[i].x);
+                            line.setAttribute('y2', points[i].y);
+                            const opacity = 0.08 + (i / points.length) * 0.55;
+                            const strokeWidth = 0.8 + (i / points.length) * 1.5;
+                            line.setAttribute('stroke', color);
+                            line.setAttribute('stroke-opacity', opacity.toFixed(2));
+                            line.setAttribute('stroke-width', strokeWidth.toFixed(1));
+                            line.setAttribute('stroke-linecap', 'round');
+                            if (i > points.length * 0.7) {
+                                line.setAttribute('filter', 'url(#trail-glow)');
+                            }
+                            svg.appendChild(line);
+                        }
+
+                        // Draw small dots at sampled positions (fading in)
+                        points.forEach((pt, idx) => {
+                            if (idx % 3 !== 0 && idx !== points.length - 1) return;
+                            const circle = document.createElementNS(svgNS, 'circle');
+                            circle.setAttribute('cx', pt.x);
+                            circle.setAttribute('cy', pt.y);
+                            const r = idx === points.length - 1 ? 3 : 1.5;
+                            circle.setAttribute('r', r);
+                            circle.setAttribute('fill', color);
+                            const dotOpacity = 0.1 + (idx / points.length) * 0.7;
+                            circle.setAttribute('fill-opacity', dotOpacity.toFixed(2));
+                            if (idx === points.length - 1) {
+                                circle.setAttribute('filter', 'url(#trail-glow)');
+                            }
+                            svg.appendChild(circle);
+                        });
+
+                    } catch (e) {
+                        // History fetch failed for this cow, skip trail
+                    }
+                });
+
+                await Promise.all(trailPromises);
+
+                // Now place current position node markers on top (z-index above SVG)
+                cows.forEach(cow => {
+                    if (!cow.bbox || cow.bbox.length !== 4) return;
+                    const pct = bboxToPercent(cow.bbox);
+                    const colorHex = getCSSColorForStatus(cow.status);
+
+                    const node = document.createElement('div');
+                    node.className = 'pasture-node';
+                    node.style.left = `${pct.x}%`;
+                    node.style.top = `${pct.y}%`;
+                    node.onclick = () => inspectCow(cow.cattle_id);
+
+                    node.innerHTML = `
+                        <div class="node-marker">
+                            <div class="node-center" style="background-color: ${colorHex}; box-shadow: 0 0 10px ${colorHex};"></div>
+                        </div>
+                        <div class="node-label">ID_${cow.cattle_id.toString().padStart(2, '0')} <span class="sep">|</span> ${cow.status.toUpperCase()}</div>
+                    `;
+                    pastureMap.appendChild(node);
+                });
+
+                if (currentSelectedCow !== null) {
+                    updateInspector(currentSelectedCow);
+                }
+
+            } catch (err) {
+                console.error("Fetch status failed:", err);
+            }
+        }
+
+        async function inspectCow(cowId) {
+            currentSelectedCow = cowId;
+            document.getElementById('inspector-title').innerHTML = `
+                <span class="deco-dot" style="background-color: var(--accent-pink);"></span>
+                03 / Inspector: COW_#${cowId.toString().padStart(3, '0')} <span class="sep">|</span> 轨迹审查
+            `;
+            updateInspector(cowId);
+        }
+
+        async function updateInspector(cowId) {
+            try {
+                const res = await fetch(`/api/cows/${cowId}/history`);
+                const history = await res.json();
+
+                const inspectorContent = document.getElementById('inspector-content');
+                if (history.length === 0) {
+                    inspectorContent.innerHTML = '<div class="no-data-msg">No logs found for this node</div>';
+                    return;
+                }
+
+                // Sort by frame desc
+                history.sort((a, b) => b.frame_index - a.frame_index || new Date(b.timestamp) - new Date(a.timestamp));
+
+                let html = '<div class="history-timeline">';
+                history.forEach(item => {
+                    const timeStr = new Date(item.timestamp).toLocaleTimeString();
+                    let badgeClass = 'tag-standing';
+                    const statusLower = item.status.toLowerCase();
+                    if (statusLower === 'estrus') badgeClass = 'tag-estrus';
+                    else if (statusLower === 'grazing') badgeClass = 'tag-grazing';
+                    else if (statusLower === 'lying') badgeClass = 'tag-lying';
+
+                    html += `
+                        <div class="timeline-card">
+                            <div class="timeline-header">
+                                <div class="timeline-frame">FR_${item.frame_index.toString().padStart(4, '0')}</div>
+                                <div class="timeline-time">${timeStr}</div>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.4rem;">
+                                <div style="font-weight: 600;">Status: <span class="status-tag ${badgeClass}">${item.status}</span></div>
+                            </div>
+                            <div class="timeline-coords">
+                                COORDS: [${item.bbox.join(', ')}]
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                inspectorContent.innerHTML = html;
+
+            } catch (err) {
+                console.error("Inspector update failed:", err);
+            }
+        }
+
+        // Periodic update
+        fetchStats();
+        setInterval(fetchStats, 2000);
+    </script>
+</body>
+
+</html>

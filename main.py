@@ -3,14 +3,33 @@ import sys
 import cv2
 import numpy as np
 import csv
+import json
+import urllib.request
+import threading
 from typing import List
 
 # Ensure trace folder is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+def upload_to_cloud(url, data_payload):
+    def run():
+        try:
+            req = urllib.request.Request(
+                url, 
+                data=json.dumps(data_payload).encode('utf-8'),
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=2.0) as response:
+                response.read()
+        except Exception:
+            pass
+            
+    threading.Thread(target=run, daemon=True).start()
+
 from core.preprocessor import CowImagePreprocessor
 from core.tracker import CentroidTracker, SingleCattleData
-from core.behavior_analyzer import CowBehaviorAnalyzer
+from core.behavior_analyzer import CattleBehaviorAnalyzer
 from models.lsnet_engine import LSNetEngine
 from utils.visualizer import CattleVisualizer
 import config
@@ -270,6 +289,9 @@ def main():
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow(["Frame_Index", "Cattle_ID", "Bbox_x1", "Bbox_y1", "Bbox_x2", "Bbox_y2", "Status"])
     
+    # Initialize cloud sync buffer
+    cloud_buffer = []
+    
     print(f"Running pipeline for {num_frames} frames...")
     
     for idx in range(num_frames):
@@ -396,10 +418,23 @@ def main():
         # H. Save annotated frame to video writer
         video_writer.write(annotated_frame)
         
-        # I. Log data to CSV file
+        # I. Log data to CSV file and Cloud Sync buffer
         for cow in analyzed_cows:
             x1, y1, x2, y2 = cow.bbox
             csv_writer.writerow([idx, cow.cattle_id, int(x1), int(y1), int(x2), int(y2), cow.status])
+            
+            if getattr(config, 'CLOUD_SYNC_ENABLED', False):
+                cloud_buffer.append({
+                    "frame_index": idx,
+                    "cattle_id": cow.cattle_id,
+                    "bbox": [int(x1), int(y1), int(x2), int(y2)],
+                    "status": cow.status
+                })
+                
+        # Flush cloud sync buffer when batch limit is reached
+        if getattr(config, 'CLOUD_SYNC_ENABLED', False) and len(cloud_buffer) >= getattr(config, 'CLOUD_SYNC_BATCH_SIZE', 25):
+            upload_to_cloud(config.CLOUD_UPLOAD_URL, cloud_buffer)
+            cloud_buffer = []
         
         # Save every 5th frame and the final frame for visualization
         if idx % 5 == 0 or idx == num_frames - 1:
@@ -408,6 +443,10 @@ def main():
             print(f"Frame {idx:02d}: Active tracks: {len(tracked_cows)}")
             for cow in analyzed_cows:
                 print(f"  - Cow #{cow.cattle_id}: Bbox={cow.bbox}, Status={cow.status}")
+                
+    # Flush remaining cloud data
+    if getattr(config, 'CLOUD_SYNC_ENABLED', False) and len(cloud_buffer) > 0:
+        upload_to_cloud(config.CLOUD_UPLOAD_URL, cloud_buffer)
                 
     if use_video:
         cap.release()
