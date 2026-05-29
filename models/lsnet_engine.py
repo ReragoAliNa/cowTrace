@@ -169,9 +169,8 @@ class LSNetEngine:
                 - Keypoints: Numpy matrix containing pose estimation coordinates.
         """
         if self.is_pt and self.model is not None:
-            # 1. Run inference using PyTorch YOLO
-            # Passing verbose=False to keep terminal logs clean
-            results = self.model(preprocessed_image, verbose=False)
+            # 1. Run inference using PyTorch YOLO with NMS thresholds
+            results = self.model(preprocessed_image, verbose=False, conf=0.25, iou=0.45)
             result = results[0]
             
             # 2. Extract Bboxes: [x1, y1, x2, y2, score, class]
