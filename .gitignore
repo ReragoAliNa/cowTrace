@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Project outputs
+outputs/
+
+# Python virtual environment / dependencies
+venv/
+.venv/
+env/
+.env/
