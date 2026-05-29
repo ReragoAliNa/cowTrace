@@ -219,17 +219,36 @@ def main():
         video_path = os.path.join(videos_dir, selected_file)
         video_name = os.path.splitext(selected_file)[0]
         
+    fps = 25.0
     if use_video:
         cap = cv2.VideoCapture(video_path)
-        # Check config to limit maximum frames to keep the execution fast and resource-friendly
         total_video_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        max_frames = getattr(config, 'MAX_PROCESSING_FRAMES', None)
-        if max_frames is not None and max_frames > 0:
-            num_frames = min(max_frames, total_video_frames)
-        else:
-            num_frames = total_video_frames
         w_orig = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h_orig = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+        total_duration = total_video_frames / fps
+        
+        num_frames = total_video_frames
+        
+        # Interactive duration input at startup
+        if sys.stdin.isatty():
+            print(f"\nVideo info: {total_duration:.1f} seconds total ({total_video_frames} frames, {fps:.1f} FPS)")
+            try:
+                duration_input = input(f"Enter duration to process in seconds [1-{total_duration:.1f}] (or press Enter for full video): ").strip()
+                if duration_input:
+                    target_seconds = float(duration_input)
+                    if target_seconds > 0:
+                        num_frames = min(int(target_seconds * fps), total_video_frames)
+                        print(f"Set to process {duration_input} seconds ({num_frames} frames).")
+            except ValueError:
+                print("Invalid input format. Using default limit configuration.")
+                
+        # If not set interactively, fall back to config
+        if num_frames == total_video_frames:
+            max_frames = getattr(config, 'MAX_PROCESSING_FRAMES', None)
+            if max_frames is not None and max_frames > 0:
+                num_frames = min(max_frames, total_video_frames)
+                
         print(f"Loaded video: {video_path} ({w_orig}x{h_orig}, running {num_frames}/{total_video_frames} frames)")
     else:
         num_frames = 30
@@ -242,10 +261,6 @@ def main():
     
     # Setup Output Video Writer
     video_out_path = os.path.join(output_dir, "output_tracked.mp4")
-    fps = 25.0
-    if use_video:
-        # Get frame rate of the original video (default to 25.0 if not read)
-        fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_writer = cv2.VideoWriter(video_out_path, fourcc, fps, (w_orig, h_orig))
     
