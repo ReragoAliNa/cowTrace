@@ -5,31 +5,28 @@ import numpy as np
 import csv
 import json
 import urllib.request
-import threading
+import time
 from typing import List
 
 # Ensure trace folder is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def upload_to_cloud(url, data_payload):
-    def run():
-        try:
-            req = urllib.request.Request(
-                url, 
-                data=json.dumps(data_payload).encode('utf-8'),
-                headers={'Content-Type': 'application/json'},
-                method='POST'
-            )
-            with urllib.request.urlopen(req, timeout=2.0) as response:
-                response.read()
-        except Exception:
-            pass
-            
-    threading.Thread(target=run, daemon=True).start()
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data_payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        with urllib.request.urlopen(req, timeout=5.0) as response:
+            response.read()
+    except Exception:
+        pass
 
 from core.preprocessor import CowImagePreprocessor
 from core.tracker import CentroidTracker, SingleCattleData
-from core.behavior_analyzer import CattleBehaviorAnalyzer
+from core.behavior_analyzer import CowBehaviorAnalyzer
 from models.lsnet_engine import LSNetEngine
 from utils.visualizer import CattleVisualizer
 import config
@@ -109,6 +106,27 @@ def box_iou(box1, box2):
     if union_area <= 0:
         return 0.0
     return inter_area / union_area
+
+def filter_behavior_detections(detections, iou_threshold=0.45, max_detections=32):
+    """NMS for behavior model boxes before using them as tracking inputs."""
+    filtered = []
+    detections = sorted(detections, key=lambda item: item["score"], reverse=True)
+    for det in detections:
+        x1, y1, x2, y2 = det["bbox"]
+        w = max(0.0, x2 - x1)
+        h = max(0.0, y2 - y1)
+        if w < 20 or h < 20:
+            continue
+        duplicate = False
+        for kept in filtered:
+            if box_iou(det["bbox"], kept["bbox"]) >= iou_threshold:
+                duplicate = True
+                break
+        if not duplicate:
+            filtered.append(det)
+        if len(filtered) >= max_detections:
+            break
+    return filtered
 
 def main():
     print("=== Cow Behavior Monitoring System Pipeline ===")
@@ -220,8 +238,12 @@ def main():
             except Exception:
                 pass
                 
+        env_video = os.environ.get("COWTRACE_VIDEO", "").strip()
         if not choice:
-            selected_file = "test.mp4" if "test.mp4" in video_files else video_files[0]
+            if env_video and env_video in video_files:
+                selected_file = env_video
+            else:
+                selected_file = "test.mp4" if "test.mp4" in video_files else video_files[0]
             print(f"No selection made or non-interactive mode. Defaulting to: {selected_file}")
         else:
             try:
@@ -237,6 +259,8 @@ def main():
                 
         video_path = os.path.join(videos_dir, selected_file)
         video_name = os.path.splitext(selected_file)[0]
+
+    run_id = f"{video_name}-{time.strftime('%Y%m%d-%H%M%S')}"
         
     fps = 25.0
     if use_video:
@@ -282,6 +306,19 @@ def main():
     video_out_path = os.path.join(output_dir, "output_tracked.mp4")
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_writer = cv2.VideoWriter(video_out_path, fourcc, fps, (w_orig, h_orig))
+    browser_video_out_path = os.path.join(output_dir, "output_tracked.webm")
+    browser_video_writer = cv2.VideoWriter(
+        browser_video_out_path,
+        cv2.VideoWriter_fourcc(*'VP80'),
+        fps,
+        (w_orig, h_orig)
+    )
+    if browser_video_writer.isOpened():
+        print(f"Browser-compatible video output enabled: {browser_video_out_path}")
+    else:
+        browser_video_writer.release()
+        browser_video_writer = None
+        print("[WARNING] Browser-compatible WebM writer is unavailable. MP4 output will still be saved.")
     
     # Setup Output CSV Log File
     csv_out_path = os.path.join(output_dir, "behavior_log.csv")
@@ -308,6 +345,7 @@ def main():
         
         # C. Model Inference & D. Coordinate Restoration
         original_space_detections = []
+        behavior_detections = []
         inference_succeeded = False
         
         if is_model_present:
@@ -337,16 +375,8 @@ def main():
                 restored_bbox = preprocessor.restore_coords([det.bbox], meta)[0]
                 det.bbox = list(restored_bbox)
                 original_space_detections.append(det)
-            
-        # E. Object Tracking (Associate detections across frames and assign stable cattle_id)
-        tracked_cows = tracker.update(original_space_detections)
-        
-        # F. Behavior Analysis (Classify standing, walking, lying, limping)
-        analyzed_cows = analyzer.analyze(tracked_cows, visualizer.histories, (w_orig, h_orig))
-        
-        # F2. Multi-Model Fusion: Fuse behavior predictions from behavior.pt model via IoU
+
         if behavior_engine is not None:
-            behavior_detections = []
             try:
                 bboxes_beh, _, _ = behavior_engine.infer(processed_frame)
                 for box in bboxes_beh:
@@ -363,7 +393,7 @@ def main():
                             label = "Lying"
                         elif label.lower() == "standing":
                             label = "Standing"
-                        
+
                         behavior_detections.append({
                             "bbox": list(restored_bbox),
                             "label": label,
@@ -371,7 +401,29 @@ def main():
                         })
             except Exception as e:
                 print(f"[ERROR] Behavior model inference failed: {e}")
-                
+            behavior_detections = filter_behavior_detections(behavior_detections)
+
+        # If the individual Re-ID model misses a scene, use behavior model boxes
+        # as cattle detections so tracking and cloud logging can still proceed.
+        if is_model_present and len(original_space_detections) == 0 and len(behavior_detections) > 0:
+            for beh in behavior_detections:
+                original_space_detections.append(
+                    SingleCattleData(
+                        bbox=list(beh["bbox"]),
+                        label="cow",
+                        behavior_label=beh["label"],
+                        behavior_score=beh["score"]
+                    )
+                )
+            
+        # E. Object Tracking (Associate detections across frames and assign stable cattle_id)
+        tracked_cows = tracker.update(original_space_detections)
+        
+        # F. Behavior Analysis (Classify standing, walking, lying, limping)
+        analyzed_cows = analyzer.analyze(tracked_cows, visualizer.histories, (w_orig, h_orig))
+        
+        # F2. Multi-Model Fusion: Fuse behavior predictions from behavior.pt model via IoU
+        if behavior_engine is not None:
             # Perform IoU association
             for cow in analyzed_cows:
                 best_iou = 0.0
@@ -417,6 +469,8 @@ def main():
         
         # H. Save annotated frame to video writer
         video_writer.write(annotated_frame)
+        if browser_video_writer is not None:
+            browser_video_writer.write(annotated_frame)
         
         # I. Log data to CSV file and Cloud Sync buffer
         for cow in analyzed_cows:
@@ -425,6 +479,8 @@ def main():
             
             if getattr(config, 'CLOUD_SYNC_ENABLED', False):
                 cloud_buffer.append({
+                    "run_id": run_id,
+                    "video_name": video_name,
                     "frame_index": idx,
                     "cattle_id": cow.cattle_id,
                     "bbox": [int(x1), int(y1), int(x2), int(y2)],
@@ -451,10 +507,14 @@ def main():
     if use_video:
         cap.release()
     video_writer.release()
+    if browser_video_writer is not None:
+        browser_video_writer.release()
     csv_file.close()
         
     print(f"\nPipeline successfully completed!")
     print(f"Annotated tracking video saved to: {video_out_path}")
+    if os.path.exists(browser_video_out_path):
+        print(f"Browser playback video saved to: {browser_video_out_path}")
     print(f"Behavioral CSV data log saved to: {csv_out_path}")
 
 if __name__ == "__main__":

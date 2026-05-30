@@ -3,6 +3,74 @@ import cv2
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
 
+class CowBehaviorAnalyzer:
+    """
+    Analyzes tracked cow trajectories and bounding boxes to assign simple
+    behavior labels used by main.py.
+    """
+    def __init__(
+        self,
+        speed_threshold_lying: float = 2.0,
+        aspect_ratio_lying: float = 0.8,
+        limping_std_threshold: float = 1.5
+    ):
+        self.speed_threshold_lying = speed_threshold_lying
+        self.aspect_ratio_lying = aspect_ratio_lying
+        self.limping_std_threshold = limping_std_threshold
+        self.speed_history: Dict[int, List[float]] = {}
+
+    def analyze(
+        self,
+        cattle_list: List[object],
+        trajectory_history: Dict[int, List[Tuple[int, int]]],
+        frame_shape: Tuple[int, int] = (800, 600)
+    ) -> List[object]:
+        frame_w, frame_h = frame_shape
+        frame_area = frame_w * frame_h
+
+        for cattle in cattle_list:
+            cid = cattle.cattle_id
+            if cid < 0:
+                continue
+
+            x1, y1, x2, y2 = cattle.bbox
+            w = max(1.0, x2 - x1)
+            h = max(1.0, y2 - y1)
+            aspect_ratio = h / w
+            relative_area = (w * h) / frame_area
+
+            history = trajectory_history.get(cid, [])
+            if len(history) < 2:
+                cattle.status = "Walking"
+                continue
+
+            dx = history[-1][0] - history[-2][0]
+            dy = history[-1][1] - history[-2][1]
+            speed = np.sqrt(dx ** 2 + dy ** 2)
+            normalized_speed = speed / h
+
+            self.speed_history.setdefault(cid, []).append(normalized_speed)
+            if len(self.speed_history[cid]) > 20:
+                self.speed_history[cid].pop(0)
+
+            is_close_up = (w > 0.4 * frame_w) or (relative_area > 0.20)
+            is_static = speed < self.speed_threshold_lying
+            if is_static and aspect_ratio < self.aspect_ratio_lying and not is_close_up:
+                cattle.status = "Lying"
+                continue
+
+            if len(self.speed_history[cid]) >= 5:
+                recent_norms = self.speed_history[cid][-10:]
+                norm_variance = np.std(recent_norms)
+                mean_norm = np.mean(recent_norms)
+                if mean_norm > 0.003 and norm_variance > (self.limping_std_threshold * 0.015):
+                    cattle.status = "Limping"
+                    continue
+
+            cattle.status = "Walking" if speed > self.speed_threshold_lying else "Standing"
+
+        return cattle_list
+
 @dataclass
 class SingleCattleData:
     """定义单只牛的多任务预测数据结构"""

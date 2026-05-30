@@ -122,7 +122,18 @@ class CentroidTracker:
     def __init__(self, max_age: int = 30, min_iou: float = 0.3):
         self.max_age = max_age
         self.min_iou = min_iou
+        self.max_center_distance_ratio = 0.9
         self.trackers: List[KalmanBoxTracker] = []
+
+    def _center_distance_ratio(self, box1: np.ndarray, box2: np.ndarray) -> float:
+        c1x = (box1[0] + box1[2]) / 2.0
+        c1y = (box1[1] + box1[3]) / 2.0
+        c2x = (box2[0] + box2[2]) / 2.0
+        c2y = (box2[1] + box2[3]) / 2.0
+        distance = np.sqrt((c1x - c2x) ** 2 + (c1y - c2y) ** 2)
+        scale1 = max(1.0, np.sqrt(max(1.0, (box1[2] - box1[0]) * (box1[3] - box1[1]))))
+        scale2 = max(1.0, np.sqrt(max(1.0, (box2[2] - box2[0]) * (box2[3] - box2[1]))))
+        return distance / max(scale1, scale2)
 
     def update(self, cattle_list: List[Any]) -> List[Any]:
         """
@@ -177,7 +188,10 @@ class CentroidTracker:
         for t in range(num_tracks):
             for d in range(num_detections):
                 iou = box_iou(predicted_boxes_arr[t], detection_boxes_arr[d])
-                cost_matrix[t, d] = 1.0 - iou
+                center_ratio = self._center_distance_ratio(predicted_boxes_arr[t], detection_boxes_arr[d])
+                distance_score = max(0.0, 1.0 - min(center_ratio / self.max_center_distance_ratio, 1.0))
+                affinity = max(iou, distance_score * 0.75)
+                cost_matrix[t, d] = 1.0 - affinity
                 
         # Hungarian algorithm matching
         track_indices, det_indices = linear_sum_assignment(cost_matrix)
@@ -187,10 +201,11 @@ class CentroidTracker:
         
         # Process matches
         for t_idx, d_idx in zip(track_indices, det_indices):
-            iou = 1.0 - cost_matrix[t_idx, d_idx]
+            iou = box_iou(predicted_boxes_arr[t_idx], detection_boxes_arr[d_idx])
+            center_ratio = self._center_distance_ratio(predicted_boxes_arr[t_idx], detection_boxes_arr[d_idx])
             
             # Match is valid if IoU is above threshold
-            if iou >= self.min_iou:
+            if iou >= self.min_iou or center_ratio <= self.max_center_distance_ratio:
                 self.trackers[t_idx].update(cattle_list[d_idx].bbox)
                 cattle_list[d_idx].cattle_id = self.trackers[t_idx].id
                 matched_tracks.add(t_idx)

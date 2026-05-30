@@ -31,7 +31,7 @@
             color: #f1f5f9;
             font-family: 'Outfit', sans-serif;
             min-height: 100vh;
-            padding: 3rem 2rem;
+            padding: 1.6rem;
             overflow-x: hidden;
             background-image:
                 linear-gradient(45deg, var(--bg-grid) 25%, transparent 25%),
@@ -74,7 +74,7 @@
         /* Deconstructive Header Section */
         header {
             position: relative;
-            margin-bottom: 5rem;
+            margin-bottom: 2.2rem;
             transform: skewY(-1deg);
             z-index: 10;
         }
@@ -159,15 +159,15 @@
         .stats-wrapper {
             display: flex;
             flex-wrap: wrap;
-            gap: 1.5rem;
-            margin-bottom: 4rem;
+            gap: 0.9rem;
+            margin-bottom: 2rem;
             position: relative;
         }
 
         .stat-box {
             background: var(--card-glass);
             border: 1px solid var(--border-glass);
-            padding: 1.8rem;
+            padding: 1.15rem 1.2rem;
             flex: 1 1 200px;
             position: relative;
             backdrop-filter: blur(12px);
@@ -222,7 +222,7 @@
         }
 
         .stat-num {
-            font-size: 2.6rem;
+            font-size: 2.1rem;
             font-weight: 800;
             margin-top: 0.5rem;
             display: flex;
@@ -252,8 +252,8 @@
         /* Main Workspace: Grid Deconstruction */
         .grid-layout {
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 2.5rem;
+            grid-template-columns: minmax(0, 1fr) minmax(430px, 1.05fr);
+            gap: 1.5rem;
             align-items: start;
         }
 
@@ -319,12 +319,12 @@
         }
 
         .panel-content {
-            padding: 2.5rem 1.8rem 1.8rem 1.8rem;
+            padding: 2rem 1.2rem 1.2rem 1.2rem;
         }
 
         /* Pasture Coordinate Grid Map */
         .pasture-viewport {
-            height: 400px;
+            height: clamp(360px, 42vh, 560px);
             background-color: rgba(2, 6, 23, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.03);
             position: relative;
@@ -332,6 +332,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            perspective: 820px;
+            perspective-origin: 50% 32%;
         }
 
         /* Diagonal warning lines on grid boundaries */
@@ -349,9 +351,72 @@
             pointer-events: none;
         }
 
+        .pasture-stage {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            bottom: 34px;
+            height: 68%;
+            transform: rotateX(62deg) rotateZ(-1deg);
+            transform-origin: center bottom;
+            transform-style: preserve-3d;
+            border: 1px solid rgba(6, 182, 212, 0.22);
+            background:
+                linear-gradient(rgba(6, 182, 212, 0.16) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.16) 1px, transparent 1px),
+                linear-gradient(180deg, rgba(16, 185, 129, 0.08), rgba(15, 23, 42, 0.1));
+            background-size: 42px 42px;
+            box-shadow: 0 26px 60px rgba(0, 0, 0, 0.42), inset 0 0 42px rgba(6, 182, 212, 0.06);
+        }
+
+        .pasture-stage::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            pointer-events: none;
+        }
+
+        .pasture-horizon {
+            position: absolute;
+            top: 16%;
+            left: 8%;
+            right: 8%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.45), transparent);
+            box-shadow: 0 0 18px rgba(6, 182, 212, 0.28);
+        }
+
+        .axis-label {
+            position: absolute;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.68rem;
+            color: rgba(148, 163, 184, 0.75);
+            letter-spacing: 2px;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        .axis-x {
+            right: 7%;
+            bottom: 18px;
+        }
+
+        .axis-z {
+            left: 7%;
+            top: 16%;
+        }
+
+        .trail-layer {
+            position: absolute;
+            inset: 0;
+            overflow: visible;
+            z-index: 1;
+            pointer-events: none;
+        }
+
         .pasture-node {
             position: absolute;
-            transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -359,6 +424,15 @@
             cursor: pointer;
             transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
             z-index: 5;
+            transform-style: preserve-3d;
+        }
+
+        .pasture-node.is-muted {
+            opacity: 0.35;
+        }
+
+        .pasture-node.is-selected {
+            z-index: 20;
         }
 
         /* Deconstructive crosshair node indicators */
@@ -424,6 +498,52 @@
             box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
         }
 
+        .pasture-node:not(.is-selected) .node-label,
+        .pasture-node:not(.is-selected) .node-depth {
+            display: none;
+        }
+
+        .pasture-node:hover .node-label,
+        .pasture-node:hover .node-depth {
+            display: block;
+        }
+
+        .node-depth {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            color: rgba(148, 163, 184, 0.82);
+            background: rgba(2, 6, 23, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1px 5px;
+            margin-top: 4px;
+        }
+
+        .video-shell {
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background-color: #000;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 16 / 9;
+            height: auto;
+            min-height: 300px;
+            max-height: 540px;
+        }
+
+        .video-status {
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            pointer-events: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 6px;
+        }
+
         /* Cyberpunk Corner Decos */
         .corner-deco {
             position: absolute;
@@ -461,6 +581,8 @@
         /* Tables & Lists */
         .data-table-container {
             overflow-x: auto;
+            max-height: 430px;
+            overflow-y: auto;
             margin-top: 1rem;
         }
 
@@ -471,6 +593,10 @@
         }
 
         th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: rgba(15, 23, 42, 0.96);
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.8rem;
             text-transform: uppercase;
@@ -491,6 +617,10 @@
             background-color: rgba(255, 255, 255, 0.01);
         }
 
+        tr.is-selected td {
+            background-color: rgba(6, 182, 212, 0.08);
+        }
+
         /* Status badges */
         .status-tag {
             font-family: 'Share Tech Mono', monospace;
@@ -501,6 +631,19 @@
             border-radius: 2px;
             letter-spacing: 1px;
             display: inline-block;
+        }
+
+        .status-stack {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .status-mini {
+            font-size: 0.62rem;
+            padding: 2px 6px;
+            opacity: 0.82;
         }
 
         .tag-estrus {
@@ -635,6 +778,60 @@
             font-weight: 300;
             display: inline-block;
         }
+
+        .dashboard-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.9rem;
+        }
+
+        .segmented-control {
+            display: inline-flex;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(2, 6, 23, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .segmented-control button,
+        .display-select {
+            background: transparent;
+            color: #94a3b8;
+            border: 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 1px;
+            padding: 0.45rem 0.65rem;
+            cursor: pointer;
+        }
+
+        .segmented-control button.active {
+            color: #fff;
+            background: rgba(6, 182, 212, 0.16);
+        }
+
+        .display-select {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(2, 6, 23, 0.72);
+            outline: none;
+        }
+
+        .map-summary {
+            position: absolute;
+            left: 12px;
+            bottom: 10px;
+            z-index: 30;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            background: rgba(2, 6, 23, 0.76);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 4px 7px;
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -711,6 +908,21 @@
                     </div>
 
                     <div class="panel-content">
+                        <div class="dashboard-toolbar">
+                            <div class="segmented-control" id="status-filter">
+                                <button class="active" data-filter="all">ALL</button>
+                                <button data-filter="lying">LYING</button>
+                                <button data-filter="standing">STANDING</button>
+                                <button data-filter="grazing">GRAZING</button>
+                                <button data-filter="estrus">ESTRUS</button>
+                            </div>
+                            <select id="display-limit" class="display-select">
+                                <option value="18">SHOW 18</option>
+                                <option value="30">SHOW 30</option>
+                                <option value="48">SHOW 48</option>
+                                <option value="999" selected>SHOW ALL</option>
+                            </select>
+                        </div>
                         <div class="pasture-viewport" id="pasture-map">
                             <!-- Spatial nodes will be rendered dynamically -->
                         </div>
@@ -730,6 +942,9 @@
                     </div>
 
                     <div class="panel-content">
+                        <div class="dashboard-toolbar">
+                            <div id="table-summary" class="timeline-coords">VISIBLE: 0 / 0</div>
+                        </div>
                         <div class="data-table-container">
                             <table>
                                 <thead>
@@ -766,20 +981,16 @@
                     </div>
 
                     <div class="panel-content" style="padding: 2.5rem 1.2rem 1.2rem 1.2rem;">
-                        <div
-                            style="position: relative; border: 1px solid rgba(255, 255, 255, 0.05); background-color: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 260px;">
-                            <video id="cloud-video-player" src="/outputs/test/output_tracked.mp4" controls autoplay loop
-                                muted style="width: 100%; height: 100%; object-fit: contain;"></video>
+                        <div class="video-shell">
+                            <video id="cloud-video-player" controls autoplay loop muted playsinline
+                                style="width: 100%; height: 100%; object-fit: contain;"></video>
 
                             <!-- Video HUD scanline & info overlays -->
                             <div
                                 style="position: absolute; top: 10px; left: 10px; pointer-events: none; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--accent-green); background: rgba(0,0,0,0.6); padding: 2px 6px; border-left: 2px solid var(--accent-green);">
                                 CAM_01 <span class="sep">|</span> EDGE_FEED
                             </div>
-                            <div
-                                style="position: absolute; bottom: 10px; right: 10px; pointer-events: none; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--accent-cyan); background: rgba(0,0,0,0.6); padding: 2px 6px;">
-                                FPS: 25.0 <span class="sep">|</span> CODEC: MP4
-                            </div>
+                            <div id="video-status" class="video-status">VIDEO: scanning</div>
                         </div>
                     </div>
                 </div>
@@ -810,11 +1021,171 @@
 
     <script>
         let currentSelectedCow = null;
+        let currentVideoPath = '';
+        let statusFilter = 'all';
+        let displayLimit = 999;
+        let autoSelectedPriorityCow = false;
+
+        function getBadgeClass(status) {
+            const statusLower = status.toLowerCase();
+            if (statusLower === 'estrus') return 'tag-estrus';
+            if (statusLower === 'grazing') return 'tag-grazing';
+            if (statusLower === 'lying') return 'tag-lying';
+            return 'tag-standing';
+        }
+
+        function getCowStatuses(cow) {
+            if (Array.isArray(cow.statuses) && cow.statuses.length > 0) {
+                return cow.statuses;
+            }
+            return [cow.status];
+        }
+
+        function renderStatusStack(cow) {
+            const statuses = getCowStatuses(cow);
+            const primaryStatus = getPrimaryStatus(cow);
+            return `
+                <div class="status-stack">
+                    <span class="status-tag ${getBadgeClass(primaryStatus)}">${primaryStatus}</span>
+                    ${statuses
+                        .filter(status => status !== primaryStatus)
+                        .map(status => `<span class="status-tag status-mini ${getBadgeClass(status)}">${status}</span>`)
+                        .join('')}
+                </div>
+            `;
+        }
+
+        function statusPriority(status) {
+            const s = status.toLowerCase();
+            if (s === 'estrus') return 0;
+            if (s === 'grazing') return 1;
+            if (s === 'lying') return 2;
+            return 3;
+        }
+
+        function getPrimaryStatus(cow) {
+            return [...getCowStatuses(cow)].sort((a, b) => statusPriority(a) - statusPriority(b))[0] || cow.status;
+        }
+
+        function cowStatusPriority(cow) {
+            return Math.min(...getCowStatuses(cow).map(statusPriority));
+        }
+
+        function applyDisplayFilter(cows) {
+            const filtered = cows
+                .filter(cow => statusFilter === 'all' || getCowStatuses(cow).some(status => status.toLowerCase() === statusFilter))
+                .sort((a, b) => {
+                    if (a.cattle_id === currentSelectedCow) return -1;
+                    if (b.cattle_id === currentSelectedCow) return 1;
+                    return cowStatusPriority(a) - cowStatusPriority(b)
+                        || statusPriority(getPrimaryStatus(a)) - statusPriority(getPrimaryStatus(b))
+                        || (b.last_frame ?? b.frame_index) - (a.last_frame ?? a.frame_index)
+                        || a.cattle_id - b.cattle_id;
+                });
+
+            const limited = filtered.slice(0, displayLimit);
+            if (currentSelectedCow !== null && !limited.some(cow => cow.cattle_id === currentSelectedCow)) {
+                const selected = cows.find(cow => cow.cattle_id === currentSelectedCow);
+                if (selected && (statusFilter === 'all' || getCowStatuses(selected).some(status => status.toLowerCase() === statusFilter))) {
+                    limited.unshift(selected);
+                    limited.splice(displayLimit);
+                }
+            }
+            return { filtered, limited };
+        }
+
+        function getColorForStatus(status) {
+            const s = status.toLowerCase();
+            if (s === 'estrus') return '#f43f5e';
+            if (s === 'grazing') return '#10b981';
+            if (s === 'lying') return '#06b6d4';
+            return '#f59e0b';
+        }
+
+        function getCSSColorForStatus(status) {
+            const s = status.toLowerCase();
+            if (s === 'estrus') return 'var(--accent-pink)';
+            if (s === 'grazing') return 'var(--accent-green)';
+            if (s === 'lying') return 'var(--accent-cyan)';
+            return 'var(--accent-yellow)';
+        }
+
+        function bboxToProjection(bbox) {
+            const cx = (bbox[0] + bbox[2]) / 2;
+            const cy = (bbox[1] + bbox[3]) / 2;
+            const bw = Math.max(1, bbox[2] - bbox[0]);
+            const bh = Math.max(1, bbox[3] - bbox[1]);
+            let mx = 960, my = 540;
+            if (bbox[2] > 960 || bbox[3] > 540 || bw > 360 || bh > 260) {
+                mx = 2560;
+                my = 1440;
+            }
+            const x = Math.min(94, Math.max(6, (cx / mx) * 100));
+            const y = Math.min(92, Math.max(8, (cy / my) * 100));
+            const areaRatio = Math.min(1, (bw * bh) / (mx * my * 0.18));
+            return {
+                x,
+                y,
+                z: Math.round((1 - y / 100) * 100),
+                scale: 0.82 + areaRatio * 0.42
+            };
+        }
+
+        async function refreshVideoSource() {
+            const player = document.getElementById('cloud-video-player');
+            const status = document.getElementById('video-status');
+            try {
+                const res = await fetch('/api/videos');
+                const videos = await res.json();
+                const video = videos[0];
+                if (!video) {
+                    status.textContent = 'VIDEO: waiting for output';
+                    return;
+                }
+                if (currentVideoPath === video.path) return;
+
+                currentVideoPath = video.path;
+                player.src = video.path;
+                player.load();
+                player.play().catch(() => { });
+                status.textContent = `VIDEO: ${video.name} | ${video.codec}`;
+
+                player.onerror = () => {
+                    if (video.fallback_path && player.src.indexOf(video.fallback_path) === -1) {
+                        currentVideoPath = video.fallback_path;
+                        player.src = video.fallback_path;
+                        player.load();
+                        status.textContent = `VIDEO: ${video.name} | fallback`;
+                    } else {
+                        status.textContent = 'VIDEO: playback error';
+                    }
+                };
+            } catch (err) {
+                const fallback = '/outputs/cow/output_tracked.webm';
+                if (currentVideoPath !== fallback) {
+                    currentVideoPath = fallback;
+                    player.src = fallback;
+                    player.load();
+                }
+                status.textContent = 'VIDEO: static fallback';
+            }
+        }
 
         async function fetchStats() {
             try {
+                refreshVideoSource();
                 const res = await fetch('/api/cows');
                 const cows = await res.json();
+                if (!autoSelectedPriorityCow && currentSelectedCow === null) {
+                    const priorityCow = [...cows]
+                        .filter(cow => cowStatusPriority(cow) < statusPriority('Standing'))
+                        .sort((a, b) => cowStatusPriority(a) - cowStatusPriority(b) || a.cattle_id - b.cattle_id)[0];
+                    if (priorityCow) {
+                        currentSelectedCow = priorityCow.cattle_id;
+                        autoSelectedPriorityCow = true;
+                    }
+                }
+                const { filtered, limited: visibleCows } = applyDisplayFilter(cows);
 
                 let estrus = 0;
                 let grazing = 0;
@@ -822,11 +1193,11 @@
                 let standing = 0;
 
                 cows.forEach(cow => {
-                    const status = cow.status.toLowerCase();
-                    if (status === 'estrus') estrus++;
-                    else if (status === 'grazing') grazing++;
-                    else if (status === 'lying') lying++;
-                    else if (status === 'standing') standing++;
+                    const statuses = getCowStatuses(cow).map(status => status.toLowerCase());
+                    if (statuses.includes('estrus')) estrus++;
+                    if (statuses.includes('grazing')) grazing++;
+                    if (statuses.includes('lying')) lying++;
+                    if (statuses.includes('standing')) standing++;
                 });
 
                 document.getElementById('stat-total').innerHTML = `${cows.length} <span class="unit">heads</span>`;
@@ -834,29 +1205,25 @@
                 document.getElementById('stat-grazing').innerHTML = `${grazing} <span class="unit">heads</span>`;
                 document.getElementById('stat-lying').innerHTML = `${lying} <span class="unit">heads</span>`;
                 document.getElementById('stat-standing').innerHTML = `${standing} <span class="unit">heads</span>`;
+                document.getElementById('table-summary').textContent = `VISIBLE: ${visibleCows.length} / ${filtered.length}`;
 
                 // Update Table
                 const tbody = document.getElementById('cow-table-body');
                 tbody.innerHTML = '';
 
-                cows.sort((a, b) => a.cattle_id - b.cattle_id);
-
-                cows.forEach(cow => {
+                visibleCows.forEach(cow => {
                     const timeStr = new Date(cow.timestamp).toLocaleTimeString();
                     const tr = document.createElement('tr');
-
-                    let badgeClass = 'tag-standing';
-                    const statusLower = cow.status.toLowerCase();
-                    if (statusLower === 'estrus') badgeClass = 'tag-estrus';
-                    else if (statusLower === 'grazing') badgeClass = 'tag-grazing';
-                    else if (statusLower === 'lying') badgeClass = 'tag-lying';
+                    if (cow.cattle_id === currentSelectedCow) {
+                        tr.className = 'is-selected';
+                    }
 
                     tr.innerHTML = `
                         <td style="font-weight: 600; font-family: 'Share Tech Mono', monospace; color: var(--accent-cyan); font-size: 0.95rem;">
                             COW_#${cow.cattle_id.toString().padStart(3, '0')}
                         </td>
-                        <td><span class="status-tag ${badgeClass}">${cow.status}</span></td>
-                        <td style="font-family: 'Share Tech Mono', monospace;">FR_${cow.frame_index.toString().padStart(4, '0')}</td>
+                        <td>${renderStatusStack(cow)}</td>
+                        <td style="font-family: 'Share Tech Mono', monospace;">FR_${(cow.first_frame ?? cow.frame_index).toString().padStart(4, '0')}-${(cow.last_frame ?? cow.frame_index).toString().padStart(4, '0')}</td>
                         <td style="font-family: 'Share Tech Mono', monospace; color: #475569; font-size: 0.8rem;">
                             [${cow.bbox.join(', ')}]
                         </td>
@@ -868,21 +1235,35 @@
                     tbody.appendChild(tr);
                 });
 
-                // Update Spatial Map with trajectory trails
+                // Update Spatial Map with 3D projection trails
                 const pastureMap = document.getElementById('pasture-map');
                 pastureMap.innerHTML = '';
+
+                const horizon = document.createElement('div');
+                horizon.className = 'pasture-horizon';
+                pastureMap.appendChild(horizon);
+
+                const axisX = document.createElement('div');
+                axisX.className = 'axis-label axis-x';
+                axisX.textContent = 'X / lateral';
+                pastureMap.appendChild(axisX);
+
+                const axisZ = document.createElement('div');
+                axisZ.className = 'axis-label axis-z';
+                axisZ.textContent = 'Z / depth';
+                pastureMap.appendChild(axisZ);
+
+                const stage = document.createElement('div');
+                stage.className = 'pasture-stage';
+                pastureMap.appendChild(stage);
 
                 // Create SVG overlay for trajectory lines
                 const svgNS = 'http://www.w3.org/2000/svg';
                 const svg = document.createElementNS(svgNS, 'svg');
+                svg.classList.add('trail-layer');
                 svg.setAttribute('width', '100%');
                 svg.setAttribute('height', '100%');
-                svg.style.position = 'absolute';
-                svg.style.top = '0';
-                svg.style.left = '0';
-                svg.style.zIndex = '1';
-                svg.style.pointerEvents = 'none';
-                pastureMap.appendChild(svg);
+                stage.appendChild(svg);
 
                 // Add SVG defs for glow filter and gradients
                 const defs = document.createElementNS(svgNS, 'defs');
@@ -907,37 +1288,8 @@
                 defs.appendChild(glowFilter);
                 svg.appendChild(defs);
 
-                // Color mapping helper
-                function getColorForStatus(status) {
-                    const s = status.toLowerCase();
-                    if (s === 'estrus') return '#f43f5e';
-                    if (s === 'grazing') return '#10b981';
-                    if (s === 'lying') return '#06b6d4';
-                    return '#f59e0b';
-                }
-
-                function getCSSColorForStatus(status) {
-                    const s = status.toLowerCase();
-                    if (s === 'estrus') return 'var(--accent-pink)';
-                    if (s === 'grazing') return 'var(--accent-green)';
-                    if (s === 'lying') return 'var(--accent-cyan)';
-                    return 'var(--accent-yellow)';
-                }
-
-                // Coordinate conversion helper
-                function bboxToPercent(bbox) {
-                    const cx = (bbox[0] + bbox[2]) / 2;
-                    const cy = (bbox[1] + bbox[3]) / 2;
-                    let mx = 960, my = 540;
-                    if (bbox[2] > 960 || bbox[3] > 540) { mx = 2560; my = 1440; }
-                    return {
-                        x: Math.min(92, Math.max(8, (cx / mx) * 100)),
-                        y: Math.min(90, Math.max(10, (cy / my) * 100))
-                    };
-                }
-
                 // For each cow, fetch history and draw trajectory
-                const trailPromises = cows.map(async (cow) => {
+                const trailPromises = visibleCows.map(async (cow) => {
                     if (!cow.bbox || cow.bbox.length !== 4) return;
                     try {
                         const hRes = await fetch(`/api/cows/${cow.cattle_id}/history`);
@@ -947,7 +1299,7 @@
                         history.sort((a, b) => a.frame_index - b.frame_index);
 
                         // Sample: take every Nth point for smoothness (max ~60 trail points)
-                        const step = Math.max(1, Math.floor(history.length / 60));
+                        const step = Math.max(1, Math.floor(history.length / 36));
                         const sampled = history.filter((_, i) => i % step === 0);
                         // Ensure last item is included
                         if (sampled.length > 0 && sampled[sampled.length - 1] !== history[history.length - 1]) {
@@ -956,15 +1308,15 @@
 
                         if (sampled.length < 2) return;
 
-                        const color = getColorForStatus(cow.status);
-                        const mapRect = pastureMap.getBoundingClientRect();
-                        const w = mapRect.width;
-                        const h = mapRect.height;
+                        const color = getColorForStatus(getPrimaryStatus(cow));
+                        const stageRect = stage.getBoundingClientRect();
+                        const w = stageRect.width;
+                        const h = stageRect.height;
 
                         // Build points array in pixel coords
                         const points = sampled.map(item => {
-                            const pct = bboxToPercent(item.bbox);
-                            return { x: (pct.x / 100) * w, y: (pct.y / 100) * h };
+                            const p = bboxToProjection(item.bbox);
+                            return { x: (p.x / 100) * w, y: (p.y / 100) * h, z: p.z };
                         });
 
                         // Draw trail segments with increasing opacity
@@ -975,7 +1327,7 @@
                             line.setAttribute('x2', points[i].x);
                             line.setAttribute('y2', points[i].y);
                             const opacity = 0.08 + (i / points.length) * 0.55;
-                            const strokeWidth = 0.8 + (i / points.length) * 1.5;
+                            const strokeWidth = 0.9 + (i / points.length) * 1.8;
                             line.setAttribute('stroke', color);
                             line.setAttribute('stroke-opacity', opacity.toFixed(2));
                             line.setAttribute('stroke-width', strokeWidth.toFixed(1));
@@ -1011,25 +1363,32 @@
                 await Promise.all(trailPromises);
 
                 // Now place current position node markers on top (z-index above SVG)
-                cows.forEach(cow => {
+                visibleCows.forEach(cow => {
                     if (!cow.bbox || cow.bbox.length !== 4) return;
-                    const pct = bboxToPercent(cow.bbox);
-                    const colorHex = getCSSColorForStatus(cow.status);
+                    const pct = bboxToProjection(cow.bbox);
+                    const colorHex = getCSSColorForStatus(getPrimaryStatus(cow));
 
                     const node = document.createElement('div');
-                    node.className = 'pasture-node';
+                    node.className = `pasture-node${cow.cattle_id === currentSelectedCow ? ' is-selected' : ''}`;
                     node.style.left = `${pct.x}%`;
                     node.style.top = `${pct.y}%`;
+                    node.style.transform = `translate(-50%, -50%) rotateZ(1deg) rotateX(-62deg) translateY(${-pct.z * 0.18}px) scale(${pct.scale.toFixed(2)})`;
                     node.onclick = () => inspectCow(cow.cattle_id);
 
                     node.innerHTML = `
                         <div class="node-marker">
                             <div class="node-center" style="background-color: ${colorHex}; box-shadow: 0 0 10px ${colorHex};"></div>
                         </div>
-                        <div class="node-label">ID_${cow.cattle_id.toString().padStart(2, '0')} <span class="sep">|</span> ${cow.status.toUpperCase()}</div>
+                        <div class="node-label">ID_${cow.cattle_id.toString().padStart(2, '0')} <span class="sep">|</span> ${getCowStatuses(cow).join('/')}</div>
+                        <div class="node-depth">Z_${pct.z.toString().padStart(3, '0')}</div>
                     `;
-                    pastureMap.appendChild(node);
+                    stage.appendChild(node);
                 });
+
+                const summary = document.createElement('div');
+                summary.className = 'map-summary';
+                summary.textContent = `MAP ${visibleCows.length}/${filtered.length} | ${statusFilter.toUpperCase()}`;
+                pastureMap.appendChild(summary);
 
                 if (currentSelectedCow !== null) {
                     updateInspector(currentSelectedCow);
@@ -1096,6 +1455,20 @@
         }
 
         // Periodic update
+        document.querySelectorAll('#status-filter button').forEach(button => {
+            button.addEventListener('click', () => {
+                statusFilter = button.dataset.filter;
+                document.querySelectorAll('#status-filter button').forEach(item => item.classList.remove('active'));
+                button.classList.add('active');
+                fetchStats();
+            });
+        });
+
+        document.getElementById('display-limit').addEventListener('change', event => {
+            displayLimit = Number(event.target.value);
+            fetchStats();
+        });
+
         fetchStats();
         setInterval(fetchStats, 2000);
     </script>

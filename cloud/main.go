@@ -25,6 +25,7 @@ func main() {
 	// Single entry handler that logs requests and handles clean routing manually
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[REQ] %s %s", r.Method, r.URL.Path)
+		w.Header().Set("Cache-Control", "no-store")
 
 		if r.URL.Path == "/" {
 			data, err := webFiles.ReadFile("web/index.html")
@@ -50,6 +51,11 @@ func main() {
 
 		if r.URL.Path == "/api/cows" {
 			handlers.GetCowsHandler(w, r)
+			return
+		}
+
+		if r.URL.Path == "/api/videos" {
+			handlers.GetVideosHandler(w, r)
 			return
 		}
 
